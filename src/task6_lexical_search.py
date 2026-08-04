@@ -21,15 +21,54 @@ from typing import Any
 STANDARDIZED_DIR = Path(__file__).parent.parent / "data" / "standardized"
 _TOKEN_RE = re.compile(r"[^\W_]+(?:['’][^\W_]+)?", re.UNICODE)
 
+# Remove conversational/function words that occur in almost every university
+# document. Domain terms such as "học", "phí", and "thanh toán" remain.
+_STOPWORDS = {
+    "a", "an", "and", "are", "at", "be", "by", "can", "do", "does", "for",
+    "from", "how", "in", "is", "it", "of", "on", "or", "the", "this", "to",
+    "what", "when", "where", "which", "who", "why", "with",
+    "bao", "bằng", "bị", "các", "cách", "cho", "có", "còn", "của", "đã",
+    "đang", "đây", "để", "được", "đâu", "hai", "hay", "hãy", "khi", "là",
+    "làm", "một", "nào", "này", "như", "những", "qua", "sao", "sẽ", "tại",
+    "theo", "thế", "thì", "trong", "từ", "và", "về", "với", "xin", "ở",
+}
+_PHRASE_ALIASES = {
+    "học phí": {"tuition", "fee", "fees"},
+    "học bổng": {"scholarship", "scholarships"},
+    "thanh toán": {"payment", "payments", "pay"},
+    "phương thức thanh toán": {"payment", "payments", "method", "methods"},
+    "thư viện": {"library"},
+    "hỗ trợ": {"support"},
+    "học tập": {"learning", "study", "academic"},
+    "dịch vụ": {"service", "services"},
+    "đăng ký": {"register", "registration", "enrol", "enrollment"},
+    "học phần": {"course", "courses"},
+    "chỗ ở": {"accommodation", "housing"},
+    "ký túc": {"accommodation", "dormitory"},
+}
+
 
 def _tokenize(text: str) -> list[str]:
     """Tokenize English/Vietnamese text without throwing punctuation away."""
 
-    return _TOKEN_RE.findall(str(text).casefold())
+    folded = str(text).casefold()
+    tokens = [
+        token
+        for token in _TOKEN_RE.findall(folded)
+        if token not in _STOPWORDS
+    ]
+    for phrase, aliases in _PHRASE_ALIASES.items():
+        if phrase in folded:
+            tokens.extend(aliases)
+    return tokens
 
 
 def _load_corpus() -> list[dict]:
-    """Load standardized Markdown files with stable metadata."""
+    """Load standardized Markdown as focused retrieval chunks.
+
+    Indexing an entire long policy as one BM25 document makes unrelated terms
+    look relevant. Small overlapping chunks keep generation evidence focused.
+    """
 
     if not STANDARDIZED_DIR.exists():
         return []
@@ -53,7 +92,32 @@ def _load_corpus() -> list[dict]:
                 },
             }
         )
-    return corpus
+    try:
+        from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=800,
+            chunk_overlap=120,
+            separators=["\n\n", "\n", ". ", "! ", "? ", "; ", " ", ""],
+            length_function=len,
+        )
+        chunks: list[dict] = []
+        for document in corpus:
+            metadata = dict(document.get("metadata", {}))
+            splits = splitter.create_documents(
+                [document["content"]], metadatas=[metadata]
+            )
+            for chunk_index, split in enumerate(splits):
+                content = split.page_content.strip()
+                if not content:
+                    continue
+                chunk_metadata = dict(split.metadata)
+                chunk_metadata["chunk_index"] = chunk_index
+                chunks.append({"content": content, "metadata": chunk_metadata})
+        return chunks
+    except ImportError:
+        # Keep Task 6 usable in a minimal environment.
+        return corpus
 
 
 # Public for the lab/demo and for callers that want to provide a custom corpus.

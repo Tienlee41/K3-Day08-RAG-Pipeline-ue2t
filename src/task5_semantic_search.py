@@ -4,8 +4,36 @@ from __future__ import annotations
 
 try:
     from .task4_chunking_indexing import get_collection, get_embedding_model
+    from .task6_lexical_search import lexical_search
 except ImportError:  # Supports `python src/task5_semantic_search.py` too.
     from task4_chunking_indexing import get_collection, get_embedding_model
+    from task6_lexical_search import lexical_search
+
+
+def _offline_search(query: str, top_k: int) -> list[dict]:
+    """Use the local chunk corpus when Chroma is not available yet.
+
+    This is intentionally a graceful development fallback, not a replacement
+    for the indexed cosine search. It keeps the RAG demo and tests useful in a
+    fresh environment where ``chromadb`` or the generated collection is absent.
+    Scores are normalized to the same [0, 1] contract as cosine similarity.
+    """
+
+    results = lexical_search(query, top_k=top_k)
+    if not results:
+        return []
+    maximum = max(float(result.get("score", 0.0) or 0.0) for result in results)
+    if maximum <= 0.0:
+        return []
+    normalized: list[dict] = []
+    for result in results:
+        item = dict(result)
+        item["score"] = round(
+            max(0.0, min(1.0, float(result.get("score", 0.0) or 0.0) / maximum)),
+            6,
+        )
+        normalized.append(item)
+    return normalized
 
 
 def semantic_search(query: str, top_k: int = 10) -> list[dict]:
@@ -21,10 +49,13 @@ def semantic_search(query: str, top_k: int = 10) -> list[dict]:
     if not isinstance(query, str) or not query.strip() or top_k <= 0:
         return []
 
-    collection = get_collection()
+    try:
+        collection = get_collection()
+    except (ImportError, RuntimeError):
+        return _offline_search(query.strip(), top_k)
     count = collection.count()
     if count == 0:
-        return []
+        return _offline_search(query.strip(), top_k)
 
     model = get_embedding_model()
     query_vector = model.encode(

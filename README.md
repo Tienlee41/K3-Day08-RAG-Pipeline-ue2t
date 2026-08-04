@@ -549,9 +549,50 @@ run_dashboard()
 
 ### Kiến Trúc Hệ Thống
 
+```mermaid
+flowchart TB
+    user[Người dùng] --> ui[Streamlit Chatbot]
+    ui --> memory[Conversation memory<br/>Chuẩn hoá câu hỏi follow-up]
+
+    subgraph ingestion[Chuẩn bị dữ liệu]
+        t1[Task 1<br/>Thu thập tài liệu chính sách]
+        t2[Task 2<br/>Crawl tin tức/dịch vụ]
+        raw[(data/landing)]
+        t3[Task 3<br/>Chuyển đổi sang Markdown]
+        docs[(data/standardized)]
+        t4[Task 4<br/>Chunking và Chroma indexing]
+
+        t1 --> raw
+        t2 --> raw
+        raw --> t3 --> docs --> t4
+    end
+
+    subgraph retrieval[Task 9 — Hybrid Retrieval]
+        t5[Task 5<br/>Semantic search]
+        t6[Task 6<br/>BM25 lexical search]
+        t7[Task 7<br/>RRF / reranking]
+        t8[Task 8<br/>PageIndex fallback]
+
+        t4 --> t5
+        docs --> t6
+        docs --> t8
+        t5 --> t7
+        t6 --> t7
+        t7 --> evidence{Evidence đủ tốt?}
+        evidence -- Không --> t8
+    end
+
+    memory --> t5
+    memory --> t6
+    evidence -- Có --> context[Context chunks và metadata]
+    t8 --> context
+    context --> t10[Task 10<br/>Generation có citation]
+    t10 --> llm[OpenRouter / OpenAI]
+    llm --> answer[Trả lời + citation + source documents]
+    answer --> ui
 ```
-[Vẽ diagram kiến trúc ở đây]
-```
+
+Pipeline kết hợp semantic search và BM25, rerank kết quả bằng RRF/cross-encoder, sau đó dùng PageIndex khi evidence yếu. Chatbot hiển thị câu trả lời, citation và các đoạn tài liệu đã dùng; OpenRouter/OpenAI là lớp sinh câu trả lời, còn chế độ extractive cục bộ là fallback khi API không sẵn sàng.
 
 ---
 
@@ -559,10 +600,8 @@ run_dashboard()
 
 | Thành viên | MSSV | Nhiệm vụ | Trạng thái |
 |-----------|------|----------|------------|
-| | | | |
-| | | | |
-| | | | |
-| | | | |
+| Nguyễn Văn Trường | 2A202601974 | Task 1, 2, 3, 4, 5 — thu thập dữ liệu, crawl, chuẩn hoá Markdown, chunking/indexing và semantic search | Hoàn thành |
+| Lê Anh Tiến | 2A202601145 | Task 6, 7, 8, 9, 10 — lexical search, reranking, PageIndex, RAG pipeline, generation có citation; xây dựng và tích hợp chatbot Streamlit | Hoàn thành |
 
 ---
 
