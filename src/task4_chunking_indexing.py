@@ -74,21 +74,39 @@ def chunk_documents(documents: list[dict]) -> list[dict]:
 
     try:
         from langchain_text_splitters import RecursiveCharacterTextSplitter
-    except ImportError as exc:
-        raise RuntimeError(
-            "Task 4 requires langchain-text-splitters; install it with "
-            "pip install langchain-text-splitters"
-        ) from exc
+    except ImportError:
+        RecursiveCharacterTextSplitter = None
 
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=CHUNK_SIZE,
-        chunk_overlap=CHUNK_OVERLAP,
-        # Prefer Markdown sections, paragraphs and sentences before splitting
-        # individual words or characters.
-        separators=["\n\n", "\n", ". ", "! ", "? ", "; ", " ", ""],
-        length_function=len,
-        add_start_index=True,
-    )
+    def fallback_split(content: str) -> list[tuple[str, int]]:
+        """Dependency-free character splitter used only when LangChain is absent."""
+
+        if not content:
+            return []
+        step = max(1, CHUNK_SIZE - CHUNK_OVERLAP)
+        chunks_with_offsets: list[tuple[str, int]] = []
+        start = 0
+        while start < len(content):
+            end = min(len(content), start + CHUNK_SIZE)
+            chunk = content[start:end].strip()
+            if chunk:
+                actual_start = content.find(chunk, start, end)
+                chunks_with_offsets.append((chunk, actual_start if actual_start >= 0 else start))
+            if end >= len(content):
+                break
+            start += step
+        return chunks_with_offsets
+
+    splitter = None
+    if RecursiveCharacterTextSplitter is not None:
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=CHUNK_SIZE,
+            chunk_overlap=CHUNK_OVERLAP,
+            # Prefer Markdown sections, paragraphs and sentences before splitting
+            # individual words or characters.
+            separators=["\n\n", "\n", ". ", "! ", "? ", "; ", " ", ""],
+            length_function=len,
+            add_start_index=True,
+        )
 
     chunks: list[dict] = []
     for document in documents:
@@ -96,14 +114,24 @@ def chunk_documents(documents: list[dict]) -> list[dict]:
         if not content:
             continue
         metadata = dict(document.get("metadata", {}))
-        splits = splitter.create_documents([content], metadatas=[metadata])
-        for chunk_index, split in enumerate(splits):
-            chunk_text = split.page_content.strip()
+        if splitter is not None:
+            splits = splitter.create_documents([content], metadatas=[metadata])
+            split_items = [
+                (split.page_content.strip(), int(split.metadata.get("start_index", 0)), split.metadata)
+                for split in splits
+            ]
+        else:
+            split_items = [
+                (chunk_text, start_index, metadata)
+                for chunk_text, start_index in fallback_split(content)
+            ]
+
+        for chunk_index, (chunk_text, start_index, split_metadata) in enumerate(split_items):
             if not chunk_text:
                 continue
-            chunk_metadata = dict(split.metadata)
+            chunk_metadata = dict(split_metadata)
             chunk_metadata["chunk_index"] = chunk_index
-            chunk_metadata["chunk_start"] = int(chunk_metadata.get("start_index", 0))
+            chunk_metadata["chunk_start"] = int(start_index)
             chunk_metadata.pop("start_index", None)
             chunks.append({"content": chunk_text, "metadata": chunk_metadata})
     return chunks

@@ -2,10 +2,53 @@
 
 from __future__ import annotations
 
+import math
+import re
+
 try:
-    from .task4_chunking_indexing import get_collection, get_embedding_model
+    from .task4_chunking_indexing import get_collection, get_embedding_model, load_documents
 except ImportError:  # Supports `python src/task5_semantic_search.py` too.
-    from task4_chunking_indexing import get_collection, get_embedding_model
+    from task4_chunking_indexing import get_collection, get_embedding_model, load_documents
+
+
+_TOKEN_RE = re.compile(r"[^\W_]+(?:['’][^\W_]+)?", re.UNICODE)
+
+
+def _fallback_semantic_search(query: str, top_k: int) -> list[dict]:
+    """Dependency-free lexical-vector approximation for local test/demo use.
+
+    The Chroma + sentence-transformers path remains the primary implementation.
+    This fallback is intentionally small and deterministic so a checkout can
+    still exercise the full pipeline before optional ML dependencies are
+    installed.
+    """
+
+    query_tokens = set(_TOKEN_RE.findall(query.casefold()))
+    if not query_tokens:
+        return []
+
+    results: list[dict] = []
+    query_norm = math.sqrt(len(query_tokens))
+    for document in load_documents():
+        content = str(document.get("content", ""))
+        content_tokens = set(_TOKEN_RE.findall(content.casefold()))
+        if not content_tokens:
+            continue
+        overlap = len(query_tokens & content_tokens)
+        if not overlap:
+            continue
+        score = overlap / (query_norm * math.sqrt(len(content_tokens)))
+        if query.casefold().strip() in content.casefold():
+            score = min(1.0, score + 0.15)
+        results.append(
+            {
+                "content": content,
+                "score": round(max(0.0, min(1.0, score)), 6),
+                "metadata": dict(document.get("metadata", {}) or {}),
+            }
+        )
+    results.sort(key=lambda result: result["score"], reverse=True)
+    return results[:top_k]
 
 
 def semantic_search(query: str, top_k: int = 10) -> list[dict]:
@@ -21,22 +64,28 @@ def semantic_search(query: str, top_k: int = 10) -> list[dict]:
     if not isinstance(query, str) or not query.strip() or top_k <= 0:
         return []
 
-    collection = get_collection()
+    try:
+        collection = get_collection()
+    except Exception:
+        return _fallback_semantic_search(query.strip(), top_k)
     count = collection.count()
     if count == 0:
         return []
 
-    model = get_embedding_model()
-    query_vector = model.encode(
-        [query.strip()],
-        convert_to_numpy=True,
-        normalize_embeddings=True,
-    )[0].astype(float).tolist()
-    raw = collection.query(
-        query_embeddings=[query_vector],
-        n_results=min(top_k, count),
-        include=["documents", "metadatas", "distances"],
-    )
+    try:
+        model = get_embedding_model()
+        query_vector = model.encode(
+            [query.strip()],
+            convert_to_numpy=True,
+            normalize_embeddings=True,
+        )[0].astype(float).tolist()
+        raw = collection.query(
+            query_embeddings=[query_vector],
+            n_results=min(top_k, count),
+            include=["documents", "metadatas", "distances"],
+        )
+    except Exception:
+        return _fallback_semantic_search(query.strip(), top_k)
 
     documents = (raw.get("documents") or [[]])[0]
     metadatas = (raw.get("metadatas") or [[]])[0]
