@@ -1,0 +1,44 @@
+# RMIT Vietnam awards 47.5 billion VND in 2025 scholarships
+
+**Source:** https://www.rmit.edu.vn/news/all-news/2025/oct/rmit-vietnam-awards-47-5-billion-vnd-in-2025-scholarships
+**Crawled:** 2026-08-04T03:34:09.157814+00:00
+
+---
+
+# RMIT Vietnam awards 47.5 billion VND in 2025 scholarships
+
+## RMIT Vietnam awards 47.5 billion VND in 2025 scholarships
+
+### The University honoured 102 outstanding students from Vietnam and abroad at its 2025 scholarship award ceremonies taking place this week at its Saigon South and Hanoi campuses, marking 25 years of educational impact in the region.
+
+It was a proud moment for RMIT Vietnam as the University celebrated the achievements of a new generation of scholars and reaffirmed its commitment to empowering individuals through education. This year’s recipients were selected from a highly competitive pool of more than 1,200 applicants, reflecting the growing reputation of RMIT as a global leader in higher education.
+
+“It is truly an honour to join this meaningful occasion celebrating and recognising an outstanding group of students from Vietnam and internationally,” Dean of Students at RMIT Vietnam, Associate Professor Seng Kiat Kok said. “This program offers a valuable opportunity for students to gain the skills, knowledge, and experiences needed to thrive in today’s global workforce.”
+
+### Celebrating excellence and opportunity
+
+Since its establishment in 2000, RMIT Vietnam has awarded more than 1,900 scholarships to high-achieving students, with a total value exceeding 613 billion VND. This year alone, the University awarded 102 scholarships worth over 47.5 billion VND, reinforcing its long-standing commitment to academic excellence, innovation, and community impact.
+
+Among the recipients were six Vice-Chancellor’s Scholars. These prestigious full-tuition scholarships were awarded to high school students who not only achieved exemplary academic results but also demonstrated outstanding leadership potential and community engagement. The selection process was rigorous, involving three rounds: application screening, shortlisting, and a final interview conducted in English. Applicants were required to submit a personal statement, recommendation letters, an introduction video, and a digital portfolio showcasing their extracurricular achievements. This year, only six students were selected out of 172 applications, highlighting the scholarship’s competitive nature.
+
+Other scholarships, which cover 25 to 50 percent of the tuition fees were allocated across categories including discipline specific, academic achievement, international, and postgraduate.
+
+“In Vietnam and across all the regions where we have a presence, we are dedicated to empowering individuals and communities to continuously evolve and prosper across generations through the pillars of education, research, and civic engagement,” Associate Professor Kok added.
+
+### Removing barriers, creating pathways
+
+One of the highlights of the 2025 scholarship award ceremonies was the continued success of the Opportunity Scholarship program, which offers support to four students living with disabilities or facing financial hardship. Since its launch in 2014, the program has provided scholarships to 46 students, valued at more than 78.3 billion VND.
+
+The University has also broadened the program’s influence and effectiveness through partnerships with non-profit organisations (NPOs) who collaborate on the selection process and relevant activities.
+
+Each Opportunity Scholarship covers full tuition for English and higher education programs, along with monthly living expenses, a laptop, and travel support if needed. Recipients also benefit from access to RMIT’s world-class academic staff, industry-informed curriculum, and global learning environment.
+
+“I encourage all our scholarship recipients to make the most of the education and opportunities available at RMIT, so you can go on to make a meaningful and positive difference in your communities and beyond,” Associate Professor Kok said.
+
+As the ceremonies concluded in both Hanoi and Ho Chi Minh City, he also expressed his heartfelt appreciation to those who continue to support the students’ journeys.
+
+“To our parents, families, and friends, thank you for your unwavering belief, support, and commitment to our recipients,” he said.
+
+The 2025 scholarship award ceremonies not only recognised individual achievement but also celebrated a quarter-century of RMIT Vietnam’s impact – empowering students, shaping communities, and building a brighter future through education.
+
+Story: Ha Hoang
